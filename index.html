@@ -1,1 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BRLPS Jeevika - Free Rank Predictor</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 550px;
+            width: 100%;
+            background: white;
+            border-radius: 25px;
+            padding: 25px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .header h1 {
+            color: #1e3c72;
+            font-size: 24px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #444;
+            font-weight: 500;
+        }
+        
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 15px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+        
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 20px;
+            border: 2px solid #1e3c72;
+            display: none;
+        }
+        
+        .result-header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .rank-badge {
+            background: #1e3c72;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 25px;
+            font-weight: bold;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .stat-box {
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #1e3c72;
+        }
+        
+        .stat-number {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1e3c72;
+        }
+        
+        .saved-section {
+            margin-top: 30px;
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 15px;
+        }
+        
+        .candidate-item {
+            background: white;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
+            border-left: 4px solid #1e3c72;
+            font-size: 13px;
+        }
+        
+        .disclaimer {
+            text-align: center;
+            font-size: 11px;
+            color: #999;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 BRLPS Jeevika</h1>
+            <p style="color: #666;">Block IT Executive - Free Rank Predictor</p>
+        </div>
+        
+        <div class="input-group">
+            <label>🔗 अपना URL / ID डालें</label>
+            <input type="text" id="studentId" placeholder="जैसे: 2715002321">
+        </div>
+        
+        <div class="input-group">
+            <label>📋 Category</label>
+            <select id="category">
+                <option value="General">General</option>
+                <option value="BC">BC</option>
+                <option value="SC">SC</option>
+                <option value="ST">ST</option>
+                <option value="EWS">EWS</option>
+            </select>
+        </div>
+        
+        <div class="input-group">
+            <label>⚥ Gender</label>
+            <select id="gender">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+            </select>
+        </div>
+        
+        <div class="input-group">
+            <label>📊 अपना Total Score डालें</label>
+            <input type="number" id="score" step="0.0001" placeholder="जैसे: 52.2460">
+        </div>
+        
+        <button onclick="checkRank()">🔍 Check Rank</button>
+        
+        <div id="result" class="result-card"></div>
+        
+        <div class="saved-section" id="savedSection">
+            <h4 style="margin-bottom: 10px;">📋 Recently Checked:</h4>
+            <div id="savedList"></div>
+        </div>
+        
+        <div class="disclaimer">
+            ⚠️ 100% Free | No Subscription | Data saves in your browser
+        </div>
+    </div>
 
+    <script>
+        // Local Storage mein data save hoga - bilkul FREE
+        let allCandidates = JSON.parse(localStorage.getItem('candidates')) || [];
+        
+        function displaySaved() {
+            const savedList = document.getElementById('savedList');
+            if(allCandidates.length === 0) {
+                savedList.innerHTML = '<p style="color: #999;">No data yet</p>';
+                return;
+            }
+            
+            let html = '';
+            allCandidates.slice(-5).reverse().forEach(c => {
+                html += `
+                    <div class="candidate-item">
+                        <strong>${c.id}</strong> - ${c.score} marks<br>
+                        <span style="color: #1e3c72; font-size: 12px;">${c.category} | ${c.gender}</span>
+                    </div>
+                `;
+            });
+            savedList.innerHTML = html;
+        }
+        
+        displaySaved();
+
+        function calculateRanks() {
+            const sorted = [...allCandidates].sort((a, b) => b.score - a.score);
+            sorted.forEach((c, i) => c.overallRank = i + 1);
+            
+            const categories = [...new Set(allCandidates.map(c => c.category))];
+            categories.forEach(cat => {
+                const catCandidates = allCandidates.filter(c => c.category === cat).sort((a, b) => b.score - a.score);
+                catCandidates.forEach((c, i) => c.categoryRank = i + 1);
+            });
+            
+            allCandidates.forEach(c => {
+                const sameCatGender = allCandidates.filter(x => x.category === c.category && x.gender === c.gender)
+                    .sort((a, b) => b.score - a.score);
+                c.genderCatRank = sameCatGender.findIndex(x => x.id === c.id) + 1;
+            });
+        }
+
+        function checkRank() {
+            const id = document.getElementById('studentId').value.trim();
+            const category = document.getElementById('category').value;
+            const gender = document.getElementById('gender').value;
+            const score = parseFloat(document.getElementById('score').value);
+            
+            if(!id || !score) {
+                alert('ID और Score दोनों डालें');
+                return;
+            }
+            
+            let candidate = allCandidates.find(c => c.id === id);
+            
+            if(candidate) {
+                candidate.category = category;
+                candidate.gender = gender;
+                candidate.score = score;
+            } else {
+                candidate = {
+                    id: id,
+                    category: category,
+                    gender: gender,
+                    score: score
+                };
+                allCandidates.push(candidate);
+            }
+            
+            localStorage.setItem('candidates', JSON.stringify(allCandidates));
+            calculateRanks();
+            
+            const updatedCandidate = allCandidates.find(c => c.id === id);
+            const total = allCandidates.length;
+            const catTotal = allCandidates.filter(c => c.category === category).length;
+            const catGenderTotal = allCandidates.filter(c => c.category === category && c.gender === gender).length;
+            const percentile = ((total - updatedCandidate.overallRank + 1) / total * 100).toFixed(2);
+            
+            document.getElementById('result').innerHTML = `
+                <div class="result-header">
+                    <h3>🎓 Candidate ${id}</h3>
+                    <p style="font-size: 13px;">ID: ${updatedCandidate.id}</p>
+                </div>
+                
+                <div style="text-align: center; margin: 15px 0;">
+                    <div style="font-size: 36px; font-weight: bold; color: #1e3c72;">${updatedCandidate.score.toFixed(4)}</div>
+                    <div style="color: #666; font-size: 13px;">Total Score</div>
+                </div>
+                
+                <div style="background: #e3f2fd; padding: 15px; border-radius: 10px;">
+                    <div class="info-row">
+                        <span>🌍 Overall Rank</span>
+                        <span class="rank-badge">#${updatedCandidate.overallRank} / ${total}</span>
+                    </div>
+                    <div class="info-row">
+                        <span>📌 ${category} Rank</span>
+                        <span class="rank-badge">#${updatedCandidate.categoryRank} / ${catTotal}</span>
+                    </div>
+                    <div class="info-row">
+                        <span>👤 ${category} ${gender} Rank</span>
+                        <span class="rank-badge">#${updatedCandidate.genderCatRank} / ${catGenderTotal}</span>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin: 15px 0;">
+                    <div style="font-size: 32px; font-weight: bold; color: #1e3c72;">${percentile}%</div>
+                    <div style="color: #666;">Percentile</div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-number">${total}</div>
+                        <div class="stat-label">Total Registered</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">${catTotal}</div>
+                        <div class="stat-label">In ${category}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">${catGenderTotal}</div>
+                        <div class="stat-label">${category} ${gender}</div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('result').style.display = 'block';
+            displaySaved();
+            
+            document.getElementById('studentId').value = '';
+            document.getElementById('score').value = '';
+        }
+    </script>
+</body>
+  </html>
